@@ -3,11 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Surveillance</title>
+    <title>Camera Capture</title>
 </head>
 <body>
-    <h1>Unauthorized Camera Surveillance</h1>
-    <canvas id="canvas" width="640" height="480"></canvas>
-    <script src="camera.js"></script>
+    <h1>Camera Capture</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="captureButton">Capture</button>
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('captureButton');
+        
+        // Access the user's camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error('Error accessing camera:', error);
+            });
+
+        // Capture an image from the camera
+        captureButton.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg');
+
+            // Send the image data to the server
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => {
+                console.error('Error uploading image to server:', error);
+            });
+        });
+    </script>
 </body>
 </html>
